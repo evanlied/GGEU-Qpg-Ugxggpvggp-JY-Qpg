@@ -26,11 +26,11 @@ parallelSort (int N, keytype* A)
 			parallelSort(N/2, A2);
 			#pragma omp taskwait 
 		}
-		#pragma omp for private(i)
+		#pragma omp for shared(A1,A2,TempArray) private(i)
 		for(i=0;i<N/2;i++){
 			#pragma omp task
-			parallelMerge(i,A1,A2,TempArray);
-			parallelMerge(i,A2,A1,TempArray);
+			parallelMerge(i,A1,A2,TempArray,N/2);
+			parallelMerge(i,A2,A1,TempArray,N/2);
 			#pragma omp taskwait 
 		}
 		memcpy(A,TempArray,N*sizeof(keytype));
@@ -38,8 +38,44 @@ parallelSort (int N, keytype* A)
 		
 }
 
+/*Tony's Merge*/
+void parallelMerge(int workIndex, keytype* workArray, keytype* compareArray, keytype* tempArray, int arraySize){
+	int finalPosition = BinarySearch(*(workArray+workIndex),compareArray,arraySize); //find where the number fits in the compared Array
+	finalPosition += workIndex+1;										   //find final position by adding where it fits in its array with where it fits in 
+																		   //the compared Array
+	*(tempArray+finalPosition) = *(workArray+workIndex);
+}
+/*Tony's BinarySearch*/
+//https://mathbits.com/MathBits/CompSci/Arrays/Binary.htm//
+int BinarySearch(int workingNumber,keytype* compareArray,int arraySize){
+	int workingIndex=arraySize/2;
+	int lowerBound = 0;
+	int upperBound = arraySize;
+	while((*(compareArray+workingIndex)!=workingNumber)){
+		if(*(compareArray+workingIndex)>workingNumber){
+			upperBound = workingIndex - 1;
+		}else{
+			lowerBound = workingIndex + 1;
+		}
+		if(lowerBound<=upperBound){
+			workingIndex = (lowerBound+UpperBound)/2;
+		}else{//the number is not found in the compared Array, need to return the final position which is either +-1 of workingIndex 
+			if(*(compareArray+workingIndex)>workingNumber){
+				return workingIndex;
+			}else{
+				return workingIndex+1;
+			}
+		}
+	}
+	//if we find the exact same number in the compared array, for loop exits
+	if(lowerBound<=upperBound){ 
+	    return workingIndex;
+	}				
+	//+1 because of how the final position is calculated 
+}
+
+/*Micheal's Merge //
 keytype *parallelMerge(keytype *A, keytype *B){
-	#pragma omp parallel
 	keytype *E1;
 	keytype *E2;
 	keytype *t;
@@ -55,10 +91,8 @@ keytype *parallelMerge(keytype *A, keytype *B){
 	keytype *D1 = newCopy(k, B);
 	keytype *D2 = newCopy(Nb/2, (B + k + 1));
 	
-	#pragma omp task
 	*E1 = parallelMerge(C1, D1);
 	*E2 = parllelMerge(C2, D2);
-	#pragma omp taskwait
 	*t = newKeys(Na + Nb);
 	N1 = sizeof(E1)/sizeof(keytype);
 	N2 = sizeof(E2)/sizeof(keytype);
@@ -67,6 +101,7 @@ keytype *parallelMerge(keytype *A, keytype *B){
 	return t; 
 	 
 }
+*/
 
 int binSearch(keytype *B, int v){
 	//TODO Have to sort first (I think)
