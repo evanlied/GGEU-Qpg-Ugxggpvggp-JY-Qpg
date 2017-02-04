@@ -8,15 +8,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
+#include <string.h>
 
 #include "sort.hh"
+
+void parallelMerge(int workIndex, keytype* workArray, keytype* compareArray, keytype* tempArray, int arraySize);
+int BinarySearch(int workingNumber, keytype* compareArray, int arraySize);
 
 void
 parallelSort (int N, keytype* A)
 {
   /* Lucky you, you get to start from scratch */
-	//Sizing/Spliting issues 
-	#pragma omp parallel{
+	//Sizing/Spliting issues
+	int i; 
+	#pragma omp parallel
+	{
 		keytype *A1 = newCopy(N/2, A);
 		keytype *A2 = newCopy(N/2, (A + (N/2 + 1)));
 		keytype *TempArray = newCopy(N,A);
@@ -58,7 +64,7 @@ int BinarySearch(int workingNumber,keytype* compareArray,int arraySize){
 			lowerBound = workingIndex + 1;
 		}
 		if(lowerBound<=upperBound){
-			workingIndex = (lowerBound+UpperBound)/2;
+			workingIndex = (lowerBound+upperBound)/2;
 		}else{//the number is not found in the compared Array, need to return the final position which is either +-1 of workingIndex 
 			if(*(compareArray+workingIndex)>workingNumber){
 				return workingIndex;
