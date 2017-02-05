@@ -21,21 +21,21 @@ parallelSort (int N, keytype* A)
 {
   /* Lucky you, you get to start from scratch */
 	//Sizing/Spliting issues
-	int i; 
-	#pragma omp parallel
+	int i;
+	keytype *A1 = newCopy(N/2, A);
+	keytype *A2 = newCopy(N/2, (A + (N/2 + 1)));
+	keytype *TempArray = newCopy(N,A);
+	#pragma omp parallel shared(A1,A2,TempArray) private(i)
 	{
-		keytype *A1 = newCopy(N/2, A);
-		keytype *A2 = newCopy(N/2, (A + (N/2 + 1)));
-//		keytype *A2 = A + (N/2 +1);
-		keytype *TempArray = newCopy(N,A);
 		if (N > 2){
 			#pragma omp task
 			parallelSort(N/2, A1);
 			parallelSort(N/2, A2);
 			#pragma omp taskwait 
 		}
-		#pragma omp for shared(A1,A2,TempArray) private(i)
+		#pragma omp for 
 		for(i=0;i<N/2;i++){
+			//printf("Merging now at N=%d\n",N/2);
 			#pragma omp task
 			parallelMerge(i,A1,A2,TempArray,N/2);
 			parallelMerge(i,A2,A1,TempArray,N/2);
@@ -48,7 +48,8 @@ parallelSort (int N, keytype* A)
 
 /*Tony's Merge*/
 void parallelMerge(int workIndex, keytype* workArray, keytype* compareArray, keytype* tempArray, int arraySize){
-	int finalPosition = binSearch(compareArray, *(workArray+workIndex)); //BinarySearch(*(workArray+workIndex),compareArray,arraySize); //find where the number fits in the compared Array
+	printf("Pmerging now for N=%d\n",arraySize);
+	int finalPosition = BinarySearch(workIndex,compareArray,arraySize); //BinarySearch(*(workArray+workIndex),compareArray,arraySize); //find where the number fits in the compared Array
 	finalPosition += workIndex+1;										   //find final position by adding where it fits in its array with where it fits in 
 																		   //the compared Array
 	*(tempArray+finalPosition) = *(workArray+workIndex);
@@ -56,16 +57,18 @@ void parallelMerge(int workIndex, keytype* workArray, keytype* compareArray, key
 /*Tony's BinarySearch*/
 //https://mathbits.com/MathBits/CompSci/Arrays/Binary.htm//
 int BinarySearch(int workingNumber,keytype* compareArray,int arraySize){
-	int workingIndex=arraySize/2;
+    int workingIndex=arraySize/2;
 	int lowerBound = 0;
 	int upperBound = arraySize;
-//	sequentialSort(arraySize, compareArray);
+	//sequentialSort(arraySize, compareArray);
+	//printf("Binary Searching for N=%d Index=%d",arraySize,workingIndex);
 	while((*(compareArray+workingIndex)!=workingNumber)){
 		if(*(compareArray+workingIndex)>workingNumber){
 			upperBound = workingIndex - 1;
 		}else{
 			lowerBound = workingIndex + 1;
 		}
+		
 		if(lowerBound<=upperBound){
 			workingIndex = (lowerBound+upperBound)/2;
 		}else{//the number is not found in the compared Array, need to return the final position which is either +-1 of workingIndex 
