@@ -14,6 +14,7 @@
 
 void parallelMerge(int workIndex, keytype* workArray, keytype* compareArray, keytype* tempArray, int arraySize);
 int BinarySearch(int workingNumber, keytype* compareArray, int arraySize);
+int binSearch(keytype *B, int v);
 
 void
 parallelSort (int N, keytype* A)
@@ -25,6 +26,7 @@ parallelSort (int N, keytype* A)
 	{
 		keytype *A1 = newCopy(N/2, A);
 		keytype *A2 = newCopy(N/2, (A + (N/2 + 1)));
+//		keytype *A2 = A + (N/2 +1);
 		keytype *TempArray = newCopy(N,A);
 		if (N > 2){
 			#pragma omp task
@@ -46,7 +48,7 @@ parallelSort (int N, keytype* A)
 
 /*Tony's Merge*/
 void parallelMerge(int workIndex, keytype* workArray, keytype* compareArray, keytype* tempArray, int arraySize){
-	int finalPosition = BinarySearch(*(workArray+workIndex),compareArray,arraySize); //find where the number fits in the compared Array
+	int finalPosition = binSearch(compareArray, *(workArray+workIndex)); //BinarySearch(*(workArray+workIndex),compareArray,arraySize); //find where the number fits in the compared Array
 	finalPosition += workIndex+1;										   //find final position by adding where it fits in its array with where it fits in 
 																		   //the compared Array
 	*(tempArray+finalPosition) = *(workArray+workIndex);
@@ -57,6 +59,7 @@ int BinarySearch(int workingNumber,keytype* compareArray,int arraySize){
 	int workingIndex=arraySize/2;
 	int lowerBound = 0;
 	int upperBound = arraySize;
+//	sequentialSort(arraySize, compareArray);
 	while((*(compareArray+workingIndex)!=workingNumber)){
 		if(*(compareArray+workingIndex)>workingNumber){
 			upperBound = workingIndex - 1;
@@ -113,6 +116,7 @@ int binSearch(keytype *B, int v){
 	//TODO Have to sort first (I think)
 	int min = 0;
 	int max = sizeof(B)/sizeof(keytype);
+	sequentialSort(max, B);
 	int guess;
 	while(1){
 		if(min > max){
