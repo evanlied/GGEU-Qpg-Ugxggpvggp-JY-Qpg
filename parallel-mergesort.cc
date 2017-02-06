@@ -10,6 +10,36 @@
 #include <omp.h>
 #include "sort.hh"
 
+int partition(keytype *A,int p,int r)
+{
+    int x = A[r];
+    int i = p-1;
+    for(int j = p;j < r;j++)
+    {
+        if(A[j] <= x) 
+        {
+            i++;
+            int temp = A[i];
+            A[i] = A[j];
+            A[j] = temp;
+        }
+    }
+    int temp = A[i+1];
+    A[i+1] = A[r];
+    A[r] = temp;
+    return i+1;
+}
+
+void quicksort(keytype *A,int p,int r)
+{
+    if(p >= r)
+        return;
+    
+    int q = partition(A,p,r);
+    quicksort(A,p,q-1);
+    quicksort(A,q+1,r);
+}
+
 void merge(keytype *T,int p1,int r1,int p2,int r2,keytype A[],int q)
 {
     int a = p1;
@@ -83,18 +113,21 @@ void parallel_merge(keytype *A,int p,int q,int r){
 //r is upperbound
 //q is the halfway mark
 //level is level of recursion 
-void parallel_merge_sort(keytype *A,int p,int r)
+void parallel_merge_sort(keytype *A,int p,int r, int level)
 {
 	//limit the parallelism to only 4 levels of recursion 
 	//so there is limited threads 
-    if(p<r){
+	if(level > 4){
+		quicksort(A,p,r);
+	}
+    if(p<r && level <= 4){
         int q = (p+r)/2;
 	#pragma omp parallel sections shared(A,p,r,q)
         {
 	#pragma omp section
-        parallel_merge_sort(A, p, q);
+        parallel_merge_sort(A, p, q, level+1);
 	#pragma omp section
-        parallel_merge_sort(A, q+1, r);
+        parallel_merge_sort(A, q+1, r, level+1);
         }
         parallel_merge(A,p,q,r);
         }
@@ -103,7 +136,7 @@ void parallel_merge_sort(keytype *A,int p,int r)
 
 void parallelSort (int length, keytype* A)
 {
-    parallel_merge_sort(A,0,length-1); //use parallelSort() as a wrapper so I can have my own arguements 
+    parallel_merge_sort(A,0,length-1,0); //use parallelSort() as a wrapper so I can have my own arguements 
 }
 
 /* eof */
