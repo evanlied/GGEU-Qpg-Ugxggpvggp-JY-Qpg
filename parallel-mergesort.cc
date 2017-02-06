@@ -10,7 +10,7 @@
 #include <omp.h>
 #include "sort.hh"
 
-int partition(keytype A[],int p,int r){
+int partition(keytype A[],int p,int r)
 {
     int x = A[r];
     int i = p-1;
