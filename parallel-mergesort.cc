@@ -10,7 +10,7 @@
 #include <omp.h>
 #include "sort.hh"
 
-int partition(keytype A[],int p,int r)
+int partition(keytype A[],int p,int r){
 {
     int x = A[r];
     int i = p-1;
@@ -117,7 +117,7 @@ void parallel_merge_sort(keytype *A,int p,int r,int level)
 {
 	//limit the parallelism to only 4 levels of recursion 
 	//so there is limited threads 
-	if(level>5){
+	if(level>4){
 		//seqSort(A,p,r);
 		sequentialSort(r-p+1,&A[p]);
 	}
